@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 set -ex
 
-# This is the master script for the capsule. When you click "Reproducible Run", the code in this file will execute.
-python -u run_capsule.py "$@"
+MODEL_NAMES=(
+    "cyto3" "nuclei" "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
+)
+
+# MODEL_NAMES=(
+#     "cyto3" 
+# )
+
+# Investigate cypto* and first 3. 
+
+# for model_name in "${MODEL_NAMES[@]}"; do
+#     echo "Training model: $model_name"
+#     python -u run_capsule.py "$model_name"
+# done
+
+RETRAIN=false  # Set to true or false as needed
+
+for model_name in "${MODEL_NAMES[@]}"; do
+    echo "$model_name" "$RETRAIN"
+done | xargs -n2 -P3 python -u run_capsule.py

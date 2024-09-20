@@ -1,0 +1,9 @@
+{
+	"version": 1,
+	"attached_datasets": [
+		{
+			"id": "3c6c4e11-2852-4c9d-9051-19efb500f585",
+			"mount": "iGluSnFR_Soma_Annotation"
+		}
+	]
+}
