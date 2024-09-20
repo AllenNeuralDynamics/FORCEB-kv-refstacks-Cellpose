@@ -219,68 +219,93 @@ def main(model_name: str, retrain: bool):
     else:
         print('-------Using cellpose out of the box-------')
         # Logic for cellpose out of the box
-        
         model = models.CellposeModel(gpu=True, model_type=model_name)
-        
+
+        # Define ranges for thresholds
+        cellprob_thresholds = np.arange(-6, 7, 1)  # Range from -6 to 6
+        flow_thresholds = np.arange(0.1, 3.1, 0.1)  # Range from 0.1 to 3.0
+
         results_list = []
-        
         for i, (image, true_mask) in enumerate(zip(images, masks_uint8)):
-            results = model.eval(image, channels=[0, 0])
-            if len(results) == 3:
-                masks_pred, flows, styles = results
-            else:
-                masks_pred, flows, styles, diams = results
-            
-            metrics = calculate_metrics(true_mask, masks_pred)
-            results_list.append({
-                'Image_Index': i,
-                'Dice_Score': metrics['Dice Score'],
-                'IoU_Score': metrics['IoU Score'],
-                'Pixel_Accuracy': metrics['Pixel Accuracy'],
-                'Number_of_True_ROIs': metrics['Number of True ROIs'],
-                'Number_of_Predicted_ROIs': metrics['Number of Predicted ROIs']
-            })
-        
+            for cellprob_threshold in cellprob_thresholds:
+                for flow_threshold in flow_thresholds:
+                    results = model.eval(
+                        image,
+                        channels=[0, 0],
+                        cellprob_threshold=cellprob_threshold,
+                        flow_threshold=flow_threshold
+                    )
+                    if len(results) == 3:
+                        masks_pred, flows, styles = results
+                    else:
+                        masks_pred, flows, styles, diams = results
+                    metrics = calculate_metrics(true_mask, masks_pred)
+                    results_list.append({
+                        'Image_Index': i,
+                        'Cellprob_Threshold': cellprob_threshold,
+                        'Flow_Threshold': flow_threshold,
+                        'Dice_Score': metrics['Dice Score'],
+                        'IoU_Score': metrics['IoU Score'],
+                        'Pixel_Accuracy': metrics['Pixel Accuracy'],
+                        'Number_of_True_ROIs': metrics['Number of True ROIs'],
+                        'Number_of_Predicted_ROIs': metrics['Number of Predicted ROIs']
+                    })
+
         results_df = pd.DataFrame(results_list)
         results_df['Model_Name'] = model_name
-        results_df.to_csv(os.path.join(model_save_path, f'{model_name}_results.csv'), index=False)
-        
+        results_df.to_csv(os.path.join(model_save_path, f'{model_name}_threshold_results.csv'), index=False)
+
         random_indices = random.sample(range(len(images)), 20)
         for idx in random_indices:
-            results = model.eval(images[idx], channels=[0, 0])
-            if len(results) == 3:
-                masks_pred, flows, styles = results
-            else:
-                masks_pred, flows, styles, diams = results
-            
-            metrics = calculate_metrics(masks_uint8[idx], masks_pred)
-            title = (f"Image_Index: {idx}, "
-                    f"Dice_Score: {metrics['Dice Score']:.2f}, "
-                    f"IoU_Score: {metrics['IoU Score']:.2f}, "
-                    f"Pixel_Accuracy: {metrics['Pixel Accuracy']:.2f}, "
-                    f"Number_of_True_ROIs: {metrics['Number of True ROIs']}, "
-                    f"Number_of_Predicted_ROIs: {metrics['Number of Predicted ROIs']}")
-            
-            fig, ax = plt.subplots(1, 4, figsize=(16, 6))
-            fig.suptitle(title, fontsize=12)
-            ax[0].imshow(images[idx])
-            ax[0].set_title('Original Image')
-            ax[0].axis('off')
-            ax[1].imshow(images[idx], cmap='gray')
-            ax[1].imshow(masks_uint8[idx], cmap='jet', alpha=0.5)
-            ax[1].set_title('Ground Truth Mask')
-            ax[1].axis('off')
-            ax[2].imshow(images[idx], cmap='gray')
-            ax[2].imshow(masks_pred, cmap='jet', alpha=0.5)
-            ax[2].set_title('Predicted Mask')
-            ax[2].axis('off')
-            ax[3].imshow(flows[0], cmap='gray')
-            ax[3].set_title('Flow Field')
-            ax[3].axis('off')
-            plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-            plt.savefig(os.path.join(model_save_path, f'{model_name}_image_{idx}.png'), bbox_inches='tight')
-            plt.close(fig)        
-        print(f"Evaluation completed. Results saved to {os.path.join(model_save_path,f'{model_name}_results.csv')}")
+            for cellprob_threshold in cellprob_thresholds:
+                for flow_threshold in flow_thresholds:
+                    results = model.eval(
+                        images[idx],
+                        channels=[0, 0],
+                        cellprob_threshold=cellprob_threshold,
+                        flow_threshold=flow_threshold
+                    )
+                    if len(results) == 3:
+                        masks_pred, flows, styles = results
+                    else:
+                        masks_pred, flows, styles, diams = results
+                    metrics = calculate_metrics(masks_uint8[idx], masks_pred)
+                    title = (
+                        f"Image_Index: {idx}, "
+                        f"Cellprob_Threshold: {cellprob_threshold}, "
+                        f"Flow_Threshold: {flow_threshold}, "
+                        f"Dice_Score: {metrics['Dice Score']:.2f}, "
+                        f"IoU_Score: {metrics['IoU Score']:.2f}, "
+                        f"Pixel_Accuracy: {metrics['Pixel Accuracy']:.2f}, "
+                        f"Number_of_True_ROIs: {metrics['Number of True ROIs']}, "
+                        f"Number_of_Predicted_ROIs: {metrics['Number of Predicted ROIs']}"
+                    )
+                    fig, ax = plt.subplots(1, 4, figsize=(16, 6))
+                    fig.suptitle(title, fontsize=12)
+                    ax[0].imshow(images[idx])
+                    ax[0].set_title('Original Image')
+                    ax[0].axis('off')
+                    ax[1].imshow(images[idx], cmap='gray')
+                    ax[1].imshow(masks_uint8[idx], cmap='jet', alpha=0.5)
+                    ax[1].set_title('Ground Truth Mask')
+                    ax[1].axis('off')
+                    ax[2].imshow(images[idx], cmap='gray')
+                    ax[2].imshow(masks_pred, cmap='jet', alpha=0.5)
+                    ax[2].set_title('Predicted Mask')
+                    ax[2].axis('off')
+                    ax[3].imshow(flows[0], cmap='gray')
+                    ax[3].set_title('Flow Field')
+                    ax[3].axis('off')
+                    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+                    plt.savefig(
+                        os.path.join(
+                            model_save_path,
+                            f'{model_name}_image_{idx}_cellprob_{cellprob_threshold}_flow_{flow_threshold}.png'
+                        ),
+                        bbox_inches='tight'
+                    )
+                    plt.close(fig)
+        print(f"Evaluation completed. Results saved to {os.path.join(model_save_path,f'{model_name}_threshold_results.csv')}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
