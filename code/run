@@ -16,7 +16,7 @@ MODEL_NAMES=(
 #     python -u run_capsule.py "$model_name"
 # done
 
-RETRAIN=false  # Set to true or false as needed
+RETRAIN=true  # Set to true or false as needed
 
 for model_name in "${MODEL_NAMES[@]}"; do
     echo "$model_name" "$RETRAIN"

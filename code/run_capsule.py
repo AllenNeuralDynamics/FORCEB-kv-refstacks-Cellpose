@@ -35,7 +35,7 @@ def calculate_metrics(true_mask, masks_pred):
     }
 
 def main(model_name: str, retrain: bool):
-    save_path = '/root/capsule/scratch/'
+    save_path = '/root/capsule/results/'
     folder = 'retrained' if retrain else 'default'
     model_save_path = os.path.join(save_path, model_name, folder)
 
@@ -88,6 +88,7 @@ def main(model_name: str, retrain: bool):
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.Rotate(limit=45, p=0.5),
+            A.GaussNoise(var_limit=(10.0, 50.0), mean=0, p=1.0),
         ], is_check_shapes=False)
         
         augmented_images = []
@@ -122,7 +123,7 @@ def main(model_name: str, retrain: bool):
             weight_decay=1e-4,
             SGD=False,
             learning_rate=0.1,
-            n_epochs=2,
+            n_epochs=1000,
             save_path=model_save_path,
             model_name=f'{model_name}_cellpose_model.pth'
         )
@@ -149,27 +150,30 @@ def main(model_name: str, retrain: bool):
         model = load_cellpose_modelpath(model_path)
         
         results_list = []
-        # for i, (image, true_mask) in enumerate(zip(test_images, test_masks)):
-        #     results = model.eval(image, channels=[0, 0])
-        #     if len(results) == 3:
-        #         masks_pred, flows, styles = results
-        #     else:
-        #         masks_pred, flows, styles, diams = results
+        for i, (image, true_mask) in enumerate(zip(test_images, test_masks)):
+            results = model.eval(image, channels=[0, 0])
+            if len(results) == 3:
+                masks_pred, flows, styles = results
+            else:
+                masks_pred, flows, styles, diams = results
             
-        #     metrics = calculate_metrics(true_mask, masks_pred)
-        #     results_list.append({
-        #         'Image_Index': i,
-        #         'Dice_Score': metrics['Dice Score'],
-        #         'IoU_Score': metrics['IoU Score'],
-        #         'Pixel_Accuracy': metrics['Pixel Accuracy'],
-        #         'Number_of_True_ROIs': metrics['Number of True ROIs'],
-        #         'Number_of_Predicted_ROIs': metrics['Number of Predicted ROIs']
-        #     })
+            metrics = calculate_metrics(true_mask, masks_pred)
+            results_list.append({
+                'Image_Index': i,
+                'Dice_Score': metrics['Dice Score'],
+                'IoU_Score': metrics['IoU Score'],
+                'Pixel_Accuracy': metrics['Pixel Accuracy'],
+                'Number_of_True_ROIs': metrics['Number of True ROIs'],
+                'Number_of_Predicted_ROIs': metrics['Number of Predicted ROIs']
+            })
         
-        # results_df = pd.DataFrame(results_list)
-        # results_df['Model_Name'] = model_name
-        # results_df.to_csv(os.path.join(save_path, f'{model_name}_results.csv'), index=False)
+        results_df = pd.DataFrame(results_list)
+        results_df['Model_Name'] = model_name
+        results_df.to_csv(os.path.join(save_path, f'{model_name}_results.csv'), index=False)
+
+        print(f"Evaluation completed. Results saved to {os.path.join(model_save_path,f'{model_name}_results.csv')}")
         
+        plot_results_list = []
         random_indices = random.sample(range(len(test_images)), 20)
         for idx in random_indices:
             results = model.eval(test_images[idx], channels=[0, 0])
@@ -180,21 +184,13 @@ def main(model_name: str, retrain: bool):
             
             metrics = calculate_metrics(test_masks[idx], masks_pred)
 
-            results_list.append({
-                'Image_Index': i,
-                'Dice_Score': metrics['Dice Score'],
-                'IoU_Score': metrics['IoU Score'],
-                'Pixel_Accuracy': metrics['Pixel Accuracy'],
-                'Number_of_True_ROIs': metrics['Number of True ROIs'],
-                'Number_of_Predicted_ROIs': metrics['Number of Predicted ROIs']
-            })
-
-            results_df=pd.DataFrame(results_list)
-            results_df['Model_Name'] = model_name
-            
-            results_df.to_csv(os.path.join(model_save_path,f'{model_name}_results.csv'),index=False)
-            
-            print(f"Evaluation completed. Results saved to {os.path.join(model_save_path,f'{model_name}_results.csv')}")
+            # Construct the title with metrics
+            title = (f"Image_Index: {idx}, "
+                    f"Dice_Score: {metrics['Dice Score']:.2f}, "
+                    f"IoU_Score: {metrics['IoU Score']:.2f}, "
+                    f"Pixel_Accuracy: {metrics['Pixel Accuracy']:.2f}, "
+                    f"Number_of_True_ROIs: {metrics['Number of True ROIs']}, "
+                    f"Number_of_Predicted_ROIs: {metrics['Number of Predicted ROIs']}")
             
             fig, ax = plt.subplots(1, 4, figsize=(16, 6))
             fig.suptitle(title, fontsize=12)
