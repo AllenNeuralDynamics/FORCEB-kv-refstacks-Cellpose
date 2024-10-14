@@ -1,10 +1,43 @@
+# #!/usr/bin/env bash
+# set -ex
+
+# # MODEL_NAMES=(
+# #     "cyto3" "nuclei" "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
+# # )
+
+# MODEL_NAMES=(
+#    "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
+# )
+
+# # MODEL_NAMES=(
+# #     "cyto3" 
+# # )
+
+# # Investigate cypto* and first 3. 
+
+# # for model_name in "${MODEL_NAMES[@]}"; do
+# #     echo "Training model: $model_name"
+# #     python -u run_capsule.py "$model_name"
+# # done
+# GPU_IDS=(0 1 2 3)
+# # GPU_IDS=(0)
+# RETRAIN=false  # Set to true or false as needed
+
+# for model_name in "${MODEL_NAMES[@]}"; do
+#     for gpu_id in "${GPU_IDS[@]}"; do
+#         echo "$model_name" "$RETRAIN" "$gpu_id"
+#     done
+# # done | xargs -n2 -P3 python -u run_capsule.py
+# done | xargs -n3 -P4 python -u run_cellpose_default.py
+
 #!/usr/bin/env bash
 set -ex
 
 MODEL_NAMES=(
-    "cyto3" "nuclei" "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
+   "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
 )
 
+<<<<<<< HEAD
 # MODEL_NAMES=(
 #     "cyto3" 
 # )
@@ -17,7 +50,24 @@ MODEL_NAMES=(
 # done
 
 RETRAIN=true  # Set to true or false as needed
+=======
+GPU_IDS=(0 1 2 3)
+RETRAIN=false  # Set to true or false as needed
+>>>>>>> f3c5721 (lost track of changes.)
 
-for model_name in "${MODEL_NAMES[@]}"; do
-    echo "$model_name" "$RETRAIN"
-done | xargs -n2 -P3 python -u run_capsule.py
+# Check if the number of models exceeds the number of GPUs
+if [ ${#MODEL_NAMES[@]} -gt ${#GPU_IDS[@]} ]; then
+    echo "Error: More models than available GPUs."
+    exit 1
+fi
+
+# Run each model on a separate GPU
+for i in "${!MODEL_NAMES[@]}"; do
+    model_name="${MODEL_NAMES[$i]}"
+    gpu_id="${GPU_IDS[$i]}"
+    echo "Running $model_name on GPU $gpu_id"
+    python -u run_cellpose_default.py "$model_name" "$RETRAIN" "$gpu_id" &
+done
+
+# Wait for all background processes to finish
+wait
