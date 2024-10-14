@@ -34,7 +34,7 @@
 set -ex
 
 MODEL_NAMES=(
-   "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
+   "cyto3" "nuclei" "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
 )
 
 <<<<<<< HEAD
