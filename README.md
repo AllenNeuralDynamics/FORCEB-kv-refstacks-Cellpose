@@ -4,6 +4,7 @@ This capsule tests various cellpose models out of the box and the best model is 
 
 ## **Data Asset Overview**
 CO Data Asset: `3c6c4e11-2852-4c9d-9051-19efb500f585`
+CO Capsule: `https://codeocean.allenneuraldynamics.org/capsule/3613171/tree`
 
 This dataset contains two types of files:
 - Files ending with `_merged.tif`: These are the actual data files.
@@ -33,7 +34,7 @@ Channel 1 (red) was used and channel 0 (green) was discarded from dataset as cha
 
 
 # Testing Model out of the box:
-Go to [run.sh](code/run) and change `RETRAIN=false` and adjust the list from `MODEL_NAMES` to your liking. It would test cellpose and save the results to results folders in C) which would include 
+Go to [run.sh](code/run) and change `RETRAIN=false` and adjust the list from `MODEL_NAMES` to your liking. It would test cellpose and save the results to results folders which would include model_name_results.csv and images of masks generated. 
 
 ## Example of out the box performance:
 <img width="1418" alt="Cellpose_OutBoxPerf" src="https://github.com/user-attachments/assets/705d2ad8-46e1-4d9c-966e-feffbd735807" />
