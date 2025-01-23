@@ -1,72 +1,27 @@
-# #!/usr/bin/env bash
-# set -ex
-
-# # MODEL_NAMES=(
-# #     "cyto3" "nuclei" "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
-# # )
-
-# MODEL_NAMES=(
-#    "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
-# )
-
-# # MODEL_NAMES=(
-# #     "cyto3" 
-# # )
-
-# # Investigate cypto* and first 3. 
-
-# # for model_name in "${MODEL_NAMES[@]}"; do
-# #     echo "Training model: $model_name"
-# #     python -u run_capsule.py "$model_name"
-# # done
-# GPU_IDS=(0 1 2 3)
-# # GPU_IDS=(0)
-# RETRAIN=false  # Set to true or false as needed
-
-# for model_name in "${MODEL_NAMES[@]}"; do
-#     for gpu_id in "${GPU_IDS[@]}"; do
-#         echo "$model_name" "$RETRAIN" "$gpu_id"
-#     done
-# # done | xargs -n2 -P3 python -u run_capsule.py
-# done | xargs -n3 -P4 python -u run_cellpose_default.py
-
 #!/usr/bin/env bash
 set -ex
 
-MODEL_NAMES=(
-   "cyto3" "nuclei" "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
-)
-
-<<<<<<< HEAD
 # MODEL_NAMES=(
-#     "cyto3" 
+#    "cyto3" "nuclei" "cyto2_cp3" "cyto2" "cyto" "neurips_grayscale_cyto2"
 # )
 
-# Investigate cypto* and first 3. 
-
-# for model_name in "${MODEL_NAMES[@]}"; do
-#     echo "Training model: $model_name"
-#     python -u run_capsule.py "$model_name"
-# done
+MODEL_NAMES=(
+   "cyto2"
+)
 
 RETRAIN=true  # Set to true or false as needed
-=======
+
 GPU_IDS=(0 1 2 3)
-RETRAIN=false  # Set to true or false as needed
->>>>>>> f3c5721 (lost track of changes.)
 
-# Check if the number of models exceeds the number of GPUs
-if [ ${#MODEL_NAMES[@]} -gt ${#GPU_IDS[@]} ]; then
-    echo "Error: More models than available GPUs."
-    exit 1
-fi
-
-# Run each model on a separate GPU
-for i in "${!MODEL_NAMES[@]}"; do
+# Run 4 processes on different GPUs
+for i in {0..3}; do
     model_name="${MODEL_NAMES[$i]}"
-    gpu_id="${GPU_IDS[$i]}"
+    gpu_id="${GPU_IDS[$i % 4]}"  # Correctly cycle through GPU IDs
     echo "Running $model_name on GPU $gpu_id"
     python -u run_cellpose_default.py "$model_name" "$RETRAIN" "$gpu_id" &
+    if [ $((i % 4)) -eq 3 ]; then
+        wait  # Wait for the current batch of 4 processes to finish
+    fi
 done
 
 # Wait for all background processes to finish
