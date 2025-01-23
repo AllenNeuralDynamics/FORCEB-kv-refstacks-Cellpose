@@ -3,8 +3,8 @@
 This capsule tests various cellpose models out of the box and the best model is then used to train to detect cells from voltage imaging data. 
 
 ## **Data Asset Overview**
-CO Data Asset: `3c6c4e11-2852-4c9d-9051-19efb500f585`
-CO Capsule: `https://codeocean.allenneuraldynamics.org/capsule/3613171/tree`
+- CO Data Asset: `3c6c4e11-2852-4c9d-9051-19efb500f585`
+- CO Capsule: `https://codeocean.allenneuraldynamics.org/capsule/3613171/tree`
 
 This dataset contains two types of files:
 - Files ending with `_merged.tif`: These are the actual data files.
