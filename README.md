@@ -26,6 +26,11 @@ Root Directory/
 │   ├── sample2_segmented_v2.tif
 │   └── ...
 ```
+
+---
+## **System requirements**
+You may want to adjust the `GPU_COUNT` based on how many GPU you have available and `MODEL_NAMES` as well to the processes in parallel. 
+
 ## **Image Channel info**
 Channel 1 (red) was used and channel 0 (green) was discarded from dataset as channel 1 had more detailed outline of the cells. 
 <img width="1416" alt="Channel_Info" src="https://github.com/user-attachments/assets/7eaf7886-dd08-4848-a695-6a6da56878d6" />
